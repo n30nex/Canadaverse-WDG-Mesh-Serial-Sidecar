@@ -1,0 +1,7 @@
+.pio/
+.venv/
+.vscode/
+__pycache__/
+*.bin
+*.elf
+*.map
