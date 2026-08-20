@@ -19,6 +19,7 @@ BUILD_SCRIPT = (ROOT / "scripts" / "meshcore_ed25519.py").read_text(encoding="ut
 PACKAGE_SCRIPT = (ROOT / "scripts" / "package_firmware.py").read_text(encoding="utf-8")
 NV_DISPLAY = (ROOT / "src" / "helpers" / "ui" / "NV3001BDisplay.cpp").read_text(encoding="utf-8")
 CAPTURE_TOOL = (ROOT / "tools" / "capture_screen.py").read_text(encoding="utf-8")
+WINDOWS_BACKGROUND = (ROOT / "tools" / "windows_background.ps1").read_text(encoding="utf-8")
 WORKFLOW = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 
 SPEC = importlib.util.spec_from_file_location("wdg_mesh_bridge", ROOT / "tools" / "wdg_mesh_bridge.py")
@@ -273,3 +274,21 @@ def test_setup_installs_into_a_local_virtual_environment_without_a_secret_argume
     assert "*sys.argv[1:]" in SETUP_SOURCE
     assert 'add_argument(\n        "--port"' in BRIDGE_SOURCE
     assert 'add_argument(\n        "--region"' in BRIDGE_SOURCE
+
+
+def test_windows_background_tray_controls_only_the_safe_bridge_task():
+    for token in (
+        "CanadaverseWDGMeshBridge",
+        "CanadaverseWDGMeshTray",
+        "Register-ScheduledTask",
+        "New-ScheduledTaskTrigger -AtLogOn",
+        "Start-ScheduledTask",
+        "Stop-ScheduledTask",
+        ".venv\\Scripts\\pythonw.exe",
+        "Windows.Forms.NotifyIcon",
+        "Windows.Forms.ContextMenuStrip",
+    ):
+        assert token in WINDOWS_BACKGROUND
+    assert "WDG_API_KEY" not in WINDOWS_BACKGROUND
+    assert "--api-key" not in WINDOWS_BACKGROUND
+    assert re.findall(r"(?i)(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])", WINDOWS_BACKGROUND) == []

@@ -87,6 +87,17 @@ Run the live bridge on Windows:
 .venv\Scripts\python tools\wdg_mesh_bridge.py run
 ```
 
+Or install the Windows background bridge and system-tray start/stop icon:
+
+```text
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools\windows_background.ps1 -Install
+```
+
+Both start at Windows logon. Right-click the tray icon to start, stop, or
+restart the bridge; double-click it to show status. The scheduled task command
+contains no API key—the bridge continues to read it from Windows Credential
+Manager.
+
 Or on Linux:
 
 ```text
