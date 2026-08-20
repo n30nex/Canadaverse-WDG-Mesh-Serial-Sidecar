@@ -20,6 +20,7 @@ PACKAGE_SCRIPT = (ROOT / "scripts" / "package_firmware.py").read_text(encoding="
 NV_DISPLAY = (ROOT / "src" / "helpers" / "ui" / "NV3001BDisplay.cpp").read_text(encoding="utf-8")
 CAPTURE_TOOL = (ROOT / "tools" / "capture_screen.py").read_text(encoding="utf-8")
 WINDOWS_BACKGROUND = (ROOT / "tools" / "windows_background.ps1").read_text(encoding="utf-8")
+WINDOWS_TRAY_HOST = (ROOT / "tools" / "windows_tray_host.vbs").read_text(encoding="utf-8")
 WORKFLOW = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 
 SPEC = importlib.util.spec_from_file_location("wdg_mesh_bridge", ROOT / "tools" / "wdg_mesh_bridge.py")
@@ -285,6 +286,8 @@ def test_windows_background_tray_controls_only_the_safe_bridge_task():
         "Start-ScheduledTask",
         "Stop-ScheduledTask",
         ".venv\\Scripts\\pythonw.exe",
+        "windows_tray_host.vbs",
+        "System32\\wscript.exe",
         "Windows.Forms.NotifyIcon",
         "Windows.Forms.ContextMenuStrip",
     ):
@@ -292,3 +295,6 @@ def test_windows_background_tray_controls_only_the_safe_bridge_task():
     assert "WDG_API_KEY" not in WINDOWS_BACKGROUND
     assert "--api-key" not in WINDOWS_BACKGROUND
     assert re.findall(r"(?i)(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])", WINDOWS_BACKGROUND) == []
+    assert 'CreateObject("WScript.Shell")' in WINDOWS_TRAY_HOST
+    assert "shell.Run(command, 0, True)" in WINDOWS_TRAY_HOST
+    assert "WDG_API_KEY" not in WINDOWS_TRAY_HOST

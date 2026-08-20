@@ -11,6 +11,7 @@ $TrayTaskName = "CanadaverseWDGMeshTray"
 $Root = Split-Path -Parent $PSScriptRoot
 $Python = Join-Path $Root ".venv\Scripts\pythonw.exe"
 $Bridge = Join-Path $PSScriptRoot "wdg_mesh_bridge.py"
+$TrayHost = Join-Path $PSScriptRoot "windows_tray_host.vbs"
 
 function Get-TaskState([string]$TaskName) {
     $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
@@ -35,6 +36,9 @@ if ($Install) {
     if (-not (Test-Path -LiteralPath $Bridge)) {
         throw "Bridge script is missing: $Bridge"
     }
+    if (-not (Test-Path -LiteralPath $TrayHost)) {
+        throw "Windowless tray host is missing: $TrayHost"
+    }
 
     $account = [Security.Principal.WindowsIdentity]::GetCurrent().Name
     $principal = New-ScheduledTaskPrincipal `
@@ -50,11 +54,10 @@ if ($Install) {
         -ExecutionTimeLimit ([TimeSpan]::Zero) `
         -MultipleInstances IgnoreNew -Hidden
 
-    $windowsPowerShell = Join-Path $env:SystemRoot `
-        "System32\WindowsPowerShell\v1.0\powershell.exe"
+    $wscript = Join-Path $env:SystemRoot "System32\wscript.exe"
     $trayAction = New-ScheduledTaskAction `
-        -Execute $windowsPowerShell `
-        -Argument ('-NoProfile -STA -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $PSCommandPath + '"') `
+        -Execute $wscript `
+        -Argument ('//B //NoLogo "' + $TrayHost + '" "' + $PSCommandPath + '"') `
         -WorkingDirectory $Root
     $traySettings = New-ScheduledTaskSettingsSet `
         -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
