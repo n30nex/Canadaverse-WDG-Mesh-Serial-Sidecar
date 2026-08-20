@@ -72,6 +72,15 @@ def test_serial_record_becomes_live_meshcore_contract_with_host_receipt_time():
     assert BRIDGE.parse_record('WDG1 {"node_id":"bad","lat":1,"lon":1}', received) is None
 
 
+def test_full_canada_slug_selects_the_bounded_official_region_slug():
+    region = {
+        "title": "USA/Canada (Recommended)",
+        "slug": BRIDGE.slugify("USA/Canada (Recommended)"),
+        "frequency": 910.525,
+    }
+    assert BRIDGE.choose_region([region], "usa-canada-recommended") is region
+
+
 def test_device_is_serial_only_and_has_no_credential_or_network_stack():
     for token in (
         "#include <WiFi.h>",

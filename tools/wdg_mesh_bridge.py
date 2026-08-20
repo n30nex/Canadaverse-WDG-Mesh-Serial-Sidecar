@@ -365,11 +365,13 @@ def choose_region(
     regions: list[dict[str, Any]], region_name: str | None = None
 ) -> dict[str, Any]:
     if region_name:
+        requested_slug = slugify(region_name)
         matches = [
             region
             for region in regions
             if region["title"].casefold() == region_name.casefold()
             or region["slug"].casefold() == region_name.casefold()
+            or region["slug"] == requested_slug
         ]
         if len(matches) != 1:
             raise BridgeError(f"official MeshCore region {region_name!r} was not found")
