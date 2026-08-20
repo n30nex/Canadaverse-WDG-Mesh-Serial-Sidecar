@@ -22,7 +22,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
-VERSION = "0.1.0-beta.1"
+VERSION = "0.1.0-beta.2"
 PROTOCOL = "WDG1"
 WDG_ME_URL = "https://wdgwars.pl/api/me"
 WDG_UPLOAD_URL = "https://wdgwars.pl/api/upload/"

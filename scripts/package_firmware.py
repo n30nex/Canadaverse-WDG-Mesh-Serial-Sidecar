@@ -25,7 +25,9 @@ def merge_factory_image(source, target, env):
     ]
     for offset, image in env.get("FLASH_EXTRA_IMAGES", []):
         command.extend((str(offset), env.subst(str(image))))
-    command.extend((str(application_offset), str(source[0])))
+    command.extend(
+        (str(application_offset), env.subst("$BUILD_DIR/${PROGNAME}.bin"))
+    )
     subprocess.run(command, check=True)
     print(f"Factory image: {output}")
 

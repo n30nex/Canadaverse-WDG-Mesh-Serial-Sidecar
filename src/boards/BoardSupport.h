@@ -11,7 +11,7 @@
 
 namespace wdg_board {
 
-constexpr char kFirmwareVersion[] = "v0.1.0-beta.1";
+constexpr char kFirmwareVersion[] = "v0.1.0-beta.2";
 constexpr char kManufacturer[] = "Canadaverse";
 
 #if defined(WDG_BOARD_RCC6)

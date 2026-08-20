@@ -184,6 +184,8 @@ def test_all_five_exact_serial_targets_are_pinned_in_ci():
     assert "firmware-factory.bin" in WORKFLOW
     assert "merge_bin" in PACKAGE_SCRIPT
     assert '"$BUILD_DIR/${PROGNAME}.bin"' in PACKAGE_SCRIPT
+    assert "str(source[0])" not in PACKAGE_SCRIPT
+    assert "str(target[0])" not in PACKAGE_SCRIPT
 
 
 def test_rak4631_uses_upstream_wisblock_radio_power_and_pin_map():
