@@ -2,7 +2,7 @@ name: WDG Mesh Sidecar CI
 
 on:
   push:
-    branches: [main, "codex/**"]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -77,3 +77,13 @@ jobs:
           name: ${{ matrix.artifact }}-${{ github.sha }}
           path: dist/*
           if-no-files-found: error
+
+  required-service:
+    if: always()
+    needs: [contract-tests, firmware]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require complete service build
+        run: |
+          test "${{ needs.contract-tests.result }}" = "success"
+          test "${{ needs.firmware.result }}" = "success"
