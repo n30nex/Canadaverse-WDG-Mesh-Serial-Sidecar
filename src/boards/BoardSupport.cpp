@@ -85,6 +85,16 @@ void begin() {
   digitalWrite(kTxLedPin, LOW);
   Wire.begin(17, 18);
   beginFem();
+#elif defined(WDG_BOARD_RC52)
+  // Preserve the qualified RC52 FEM supply sequence and keep TX disabled.
+  NRF_POWER->DCDCEN = 1;
+  pinMode(RADIOCORE_FEM_EN, OUTPUT);
+  digitalWrite(RADIOCORE_FEM_EN, HIGH);
+  pinMode(RADIOCORE_VFEM_CTRL, OUTPUT);
+  digitalWrite(RADIOCORE_VFEM_CTRL, HIGH);
+  pinMode(PIN_BAT_CTL, OUTPUT);
+  digitalWrite(PIN_BAT_CTL, LOW);
+  delay(10);
 #elif defined(WDG_BOARD_RAK4631)
   // The integrated SX1262 is behind a dedicated active-high power switch.
   constexpr int kSx126xPowerEnable = 37;
@@ -115,7 +125,9 @@ void beforeReceive() {
 }
 
 bool applyRadioConfiguration(SX1262 &radio) {
-#if defined(WDG_BOARD_HELTEC_V4)
+#if defined(WDG_BOARD_RC52)
+  radio.setRfSwitchPins(SX126X_RXEN, RADIOLIB_NC);
+#elif defined(WDG_BOARD_HELTEC_V4)
   // Heltec's current V4 support sets bit 0 at 0x08B5 for improved receive.
   uint8_t value = 0;
   if (radio.readRegister(0x08B5, &value, 1) != RADIOLIB_ERR_NONE) {

@@ -5,13 +5,17 @@
 
 #if (defined(WDG_BOARD_RCC6) + defined(WDG_BOARD_HELTEC_V3) + \
      defined(WDG_BOARD_HELTEC_V4) + defined(WDG_BOARD_RAK4631) + \
-     defined(WDG_BOARD_HELTEC_TRACKER)) != 1
+     defined(WDG_BOARD_HELTEC_TRACKER) + defined(WDG_BOARD_RC52)) != 1
 #error "Select exactly one WDG sidecar board"
 #endif
 
 namespace wdg_board {
 
+#if defined(WDG_BOARD_RC52)
+constexpr char kFirmwareVersion[] = "v0.1.0-beta.3-rc52";
+#else
 constexpr char kFirmwareVersion[] = "v0.1.0-beta.2";
+#endif
 constexpr char kManufacturer[] = "Canadaverse";
 
 #if defined(WDG_BOARD_RCC6)
@@ -79,6 +83,22 @@ constexpr int kLoRaNss = 42;
 constexpr int kLoRaDio1 = 47;
 constexpr int kLoRaBusy = 46;
 constexpr int kLoRaReset = 38;
+constexpr int8_t kRadioTxPowerDbm = 22;
+constexpr int8_t kEffectiveTxPowerDbm = 22;
+#elif defined(WDG_BOARD_RC52)
+constexpr char kBoardLabel[] = "RC52";
+constexpr char kDeviceName[] = "WDG Mesh RC52";
+constexpr char kModelNumber[] = "Heltec RC52 WDG Mesh Serial";
+constexpr char kSetupPrefix[] = "WDG-RC52-";
+constexpr bool kHasColorDisplay = true;
+constexpr int kUserButtonPin = 42;
+constexpr int kLoRaSclk = 25;
+constexpr int kLoRaMiso = 14;
+constexpr int kLoRaMosi = 22;
+constexpr int kLoRaNss = 13;
+constexpr int kLoRaDio1 = 11;
+constexpr int kLoRaBusy = 24;
+constexpr int kLoRaReset = 32;
 constexpr int8_t kRadioTxPowerDbm = 22;
 constexpr int8_t kEffectiveTxPowerDbm = 22;
 #elif defined(WDG_BOARD_HELTEC_TRACKER)

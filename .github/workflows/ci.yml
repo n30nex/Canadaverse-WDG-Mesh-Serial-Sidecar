@@ -43,6 +43,9 @@ jobs:
           - environment: heltec_tracker_wdg_serial
             artifact: Canadaverse-WDG-Mesh-Serial-Heltec-Tracker-app
             extension: bin
+          - environment: rc52_wdg_serial
+            artifact: Canadaverse-WDG-Mesh-Serial-RC52
+            extension: hex
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:

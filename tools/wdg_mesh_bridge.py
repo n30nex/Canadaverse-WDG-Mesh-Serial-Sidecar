@@ -300,10 +300,15 @@ def resolve_port(identity: dict[str, Any]) -> str:
 
 
 def open_device(port: str):
-    serial, _ = serial_modules()
+    serial, list_ports = serial_modules()
     try:
         device = serial.Serial(port, 115200, timeout=0.25, write_timeout=2)
-        device.dtr = False
+        # Adafruit nRF52 USB CDC only sends when the host asserts DTR.
+        # Keep ESP32/UART reset-line behavior unchanged.
+        device.dtr = any(
+            candidate.device == port and candidate.vid == 0x239A
+            for candidate in list_ports.comports()
+        )
         device.rts = False
         return device
     except (serial.SerialException, OSError) as exc:
@@ -423,6 +428,21 @@ def configure(port_name: str | None = None, region_name: str | None = None) -> i
     print(f"Configured {board} ({firmware}) for {region['title']}.")
     print("The API key is in the OS credential vault, not the config file or device.")
     print("Run: python tools/wdg_mesh_bridge.py run")
+    return 0
+
+
+def select_device(port_name: str) -> int:
+    config = load_config()
+    port, identity = choose_port(port_name)
+    validate_api_key(load_api_key())
+    with open_device(port) as device:
+        board, firmware = probe_device(device)
+        apply_region(device, config["region"])
+        write_line(device, "WDG1 STOP")
+    config["device"] = identity
+    save_config(config)
+    print(f"Selected {board} ({firmware}) on {port}; saved region and WDG key retained.")
+    print("Restart the background bridge to use this radio.")
     return 0
 
 
@@ -606,6 +626,10 @@ def main() -> int:
     configure_parser.add_argument(
         "--region", help="exact official MeshCore region title or slug"
     )
+    select_parser = commands.add_parser(
+        "select-device", help="swap the USB radio while keeping the saved region and key"
+    )
+    select_parser.add_argument("--port", required=True, help="explicit replacement serial port")
     run_parser = commands.add_parser("run", help="run the live serial-to-WDG bridge")
     run_parser.add_argument(
         "--dry-run", action="store_true", help="show live batches without POSTing"
@@ -617,6 +641,8 @@ def main() -> int:
     try:
         if args.command == "configure":
             return configure(args.port, args.region)
+        if args.command == "select-device":
+            return select_device(args.port)
         if args.command == "run":
             return run_bridge(args.dry_run)
         if args.command == "status":

@@ -6,6 +6,8 @@ import importlib.util
 import json
 from pathlib import Path
 import re
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -81,6 +83,43 @@ def test_full_canada_slug_selects_the_bounded_official_region_slug():
         "frequency": 910.525,
     }
     assert BRIDGE.choose_region([region], "usa-canada-recommended") is region
+
+
+def test_native_nrf_usb_asserts_dtr_without_changing_esp_uart_reset_lines():
+    for vid, expected in ((0x239A, True), (0x303A, False), (0x10C4, False)):
+        serial = MagicMock()
+        ports = SimpleNamespace(comports=lambda: [SimpleNamespace(device="COM22", vid=vid)])
+        with patch.object(BRIDGE, "serial_modules", return_value=(serial, ports)):
+            device = BRIDGE.open_device("COM22")
+        assert device.dtr is expected
+        assert device.rts is False
+
+
+def test_radio_swap_preserves_region_and_does_not_save_a_failed_probe():
+    from contextlib import ExitStack
+    old = {"version": 1, "device": {"serial_number": "old"}, "region": {"title": "Canada"}}
+    for fails in (False, True):
+        with ExitStack() as stack:
+            mocks = {name: stack.enter_context(patch.object(BRIDGE, name)) for name in (
+                "load_config", "choose_port", "load_api_key", "validate_api_key", "open_device",
+                "probe_device", "apply_region", "write_line", "save_config", "store_api_key",
+            )}
+            mocks["load_config"].return_value = json.loads(json.dumps(old))
+            mocks["choose_port"].return_value = ("COM22", {"serial_number": "new"})
+            mocks["probe_device"].return_value = ("RC52", "test")
+            if fails:
+                mocks["probe_device"].side_effect = BRIDGE.BridgeError("no handshake")
+            try:
+                BRIDGE.select_device("COM22")
+                assert not fails
+            except BRIDGE.BridgeError:
+                assert fails
+            mocks["store_api_key"].assert_not_called()
+            if fails:
+                mocks["save_config"].assert_not_called()
+            else:
+                saved = mocks["save_config"].call_args.args[0]
+                assert saved == {**old, "device": {"serial_number": "new"}}
 
 
 def test_device_is_serial_only_and_has_no_credential_or_network_stack():
@@ -166,13 +205,14 @@ def test_wdg_endpoint_and_waf_user_agent_are_fixed():
     assert 'request.add_header("X-API-Key", api_key)' in BRIDGE_SOURCE
 
 
-def test_all_five_exact_serial_targets_are_pinned_in_ci():
+def test_all_six_exact_serial_targets_are_pinned_in_ci():
     targets = (
         "rcc6_wdg_serial",
         "heltec_v3_wdg_serial",
         "heltec_v4_wdg_serial",
         "rak4631_wdg_serial",
         "heltec_tracker_wdg_serial",
+        "rc52_wdg_serial",
     )
     assert "default_envs = " + ", ".join(targets) in PLATFORMIO
     for target in targets:
