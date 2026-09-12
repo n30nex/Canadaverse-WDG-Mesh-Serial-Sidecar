@@ -113,19 +113,11 @@ def main() -> None:
     if args.scale < 1 or args.timeout <= 0:
         parser.error("--scale and --timeout must be positive")
 
-    try:
-        import serial
-    except ImportError as error:
-        raise SystemExit("pyserial is required: python -m pip install pyserial") from error
+    from wdg_mesh_bridge import open_device
 
-    port = serial.Serial()
-    port.port = args.port
-    port.baudrate = 115200
+    port = open_device(args.port)
     port.timeout = 0.1
     port.write_timeout = 3
-    port.dtr = False
-    port.rts = False
-    port.open()
     try:
         # Opening native USB can restart an ESP32-S3. Let networking and display
         # setup finish so the diagnostic command cannot capture an early boot frame.
