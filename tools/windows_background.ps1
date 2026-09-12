@@ -1,6 +1,7 @@
 param(
     [switch]$Install,
-    [switch]$StatusOnly
+    [switch]$StatusOnly,
+    [switch]$StopOnly
 )
 
 Set-StrictMode -Version Latest
@@ -19,8 +20,34 @@ function Get-TaskState([string]$TaskName) {
     return $task.State.ToString()
 }
 
-if ($Install -and $StatusOnly) {
-    throw "Choose either -Install or -StatusOnly."
+function Stop-BridgeWorker {
+    $worker = Get-ScheduledTask -TaskName $WorkerTaskName -ErrorAction SilentlyContinue
+    if ($null -eq $worker) { return }
+    $arguments = @($worker.Actions)[0].Arguments
+    if ($arguments -notmatch '^"([^"\r\n]+[\\/]wdg_mesh_bridge\.py)" run$') {
+        throw "Unexpected bridge action; refusing to stop unrelated processes."
+    }
+    $bridgePattern = '"' + [regex]::Escape($Matches[1]) + '" run(?:\s|$)'
+    # Windows venv launchers can leave their interpreter child alive after the
+    # task stops. Select only workers running this task's exact bridge script.
+    $workers = @(Get-CimInstance Win32_Process | Where-Object {
+        $_.Name -in @('python.exe', 'pythonw.exe') -and
+        $_.CommandLine -match $bridgePattern
+    })
+    Stop-ScheduledTask -TaskName $WorkerTaskName
+    foreach ($workerProcess in $workers) {
+        Stop-Process -Id $workerProcess.ProcessId -Force -ErrorAction SilentlyContinue
+    }
+}
+
+if (@($Install, $StatusOnly, $StopOnly).Where({ $_ }).Count -gt 1) {
+    throw "Choose only one of -Install, -StatusOnly, or -StopOnly."
+}
+
+if ($StopOnly) {
+    Stop-BridgeWorker
+    Write-Output "Bridge: $(Get-TaskState $WorkerTaskName)"
+    exit 0
 }
 
 if ($StatusOnly) {
@@ -66,7 +93,8 @@ if ($Install) {
 
     foreach ($taskName in @($WorkerTaskName, $TrayTaskName)) {
         if (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue) {
-            Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+            if ($taskName -eq $WorkerTaskName) { Stop-BridgeWorker }
+            else { Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue }
         }
     }
 
@@ -141,9 +169,9 @@ function Invoke-WorkerAction([string]$Action) {
     try {
         switch ($Action) {
             "Start" { Start-ScheduledTask -TaskName $WorkerTaskName }
-            "Stop" { Stop-ScheduledTask -TaskName $WorkerTaskName }
+            "Stop" { Stop-BridgeWorker }
             "Restart" {
-                Stop-ScheduledTask -TaskName $WorkerTaskName
+                Stop-BridgeWorker
                 Start-Sleep -Milliseconds 300
                 Start-ScheduledTask -TaskName $WorkerTaskName
             }
