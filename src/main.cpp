@@ -407,6 +407,10 @@ bool validRadioSettings(float frequency, float bandwidth,
 void configureFromHost(float frequency, float bandwidth,
                        unsigned spreadingFactor, unsigned codingRate,
                        uint32_t epoch, const char *slug) {
+  if (!loraReady) {
+    Serial.println("WDG1 ERROR RADIO_NOT_READY");
+    return;
+  }
   if (!validRadioSettings(frequency, bandwidth, spreadingFactor, codingRate)) {
     Serial.println("WDG1 ERROR SETTINGS");
     return;
