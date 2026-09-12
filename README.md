@@ -25,6 +25,7 @@ This is a standalone project. It does not replace or modify the separate
 | `heltec_v4_wdg_serial` | Heltec WiFi LoRa 32 V4/V4.3 | 128x64 OLED | Builds; V4 pin/FEM base previously qualified |
 | `rak4631_wdg_serial` | RAKwireless WisBlock RAK4631 | Headless | Builds from upstream MeshCore pin map |
 | `heltec_tracker_wdg_serial` | Heltec Wireless Tracker | Headless | Builds from upstream MeshCore pin map |
+| `rc52_wdg_serial` | Heltec RadioCore RC52-L62/SX1262 | 220x128 NV3001B TFT | Experimental; uses the qualified NeonPocket RC52 pin map |
 
 “Builds” is not a claim of physical qualification. Do not publish a stable
 image for a board until its USB handshake and radio receive path are tested on
@@ -98,6 +99,17 @@ restart the bridge; double-click it to show status. The scheduled task command
 contains no API key—the bridge continues to read it from Windows Credential
 Manager.
 
+To swap radios, stop the background bridge, connect the replacement running its
+matching serial-sidecar firmware, and run:
+
+```text
+.venv\Scripts\python tools\wdg_mesh_bridge.py select-device --port COM22
+```
+
+Use the replacement's actual port. The command verifies the radio and WDG
+authentication before saving its USB identity. It retains the existing region
+and credential-vault key. Restart the background bridge after selection.
+
 Or on Linux:
 
 ```text
@@ -124,6 +136,11 @@ image and a one-file `-factory.bin`; write the factory image at address `0x0`
 for a clean USB flash. The RAK4631 target includes both Intel HEX and its
 bootloader-ready `-nrfutil.zip` package. Always choose the image whose board
 name exactly matches the attached hardware.
+
+RC52 also uses application-only nRF52 HEX/nrfutil (S140 6.1.1, application
+start `0x26000`). Preserve its bootloader, SoftDevice and MeshCore storage.
+The collector keeps observations in RAM and does not mount or rewrite the
+existing MeshCore filesystem. RC52's TFT uses SPI1 at 8 MHz; LoRa uses SPI.
 
 ## What WDG receives
 
@@ -160,6 +177,7 @@ pio run -e heltec_v3_wdg_serial
 pio run -e heltec_v4_wdg_serial
 pio run -e rak4631_wdg_serial
 pio run -e heltec_tracker_wdg_serial
+pio run -e rc52_wdg_serial
 ```
 
 ESP32 targets produce `firmware.bin`. RAK4631 produces `firmware.hex` and an

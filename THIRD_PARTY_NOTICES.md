@@ -35,6 +35,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## Heltec RC52 board support
+
+The RC52 variant pin definitions and initialization derive from Heltec's
+[`Heltec_nRF52`](https://github.com/HelTecAutomation/Heltec_nRF52)
+`heltec_rc52` variant at commit `4cd245aa30d72a6c3d40af227084943465e2d0f6`,
+via the hardware-qualified NeonPocketMC-RC52 port. These variant files are
+LGPL-2.1-or-later. Their notices remain in the source files.
+
 ## WatchDogsGo
 
 The WDGWars MeshCore record schema, authentication check, and HMAC upload flow

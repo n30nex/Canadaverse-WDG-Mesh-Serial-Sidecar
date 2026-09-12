@@ -14,7 +14,7 @@
 
 #include "boards/BoardSupport.h"
 
-#if defined(WDG_BOARD_RCC6)
+#if defined(WDG_BOARD_RCC6) || defined(WDG_BOARD_RC52)
 #include "helpers/ui/NV3001BDisplay.h"
 #elif defined(WDG_BOARD_HELTEC_V3) || defined(WDG_BOARD_HELTEC_V4)
 #include <helpers/ui/SSD1306Display.h>
@@ -38,6 +38,8 @@ constexpr size_t kPublicKeySize = 32;
 
 #if defined(WDG_BOARD_RCC6)
 NV3001BDisplay display;
+#elif defined(WDG_BOARD_RC52)
+NV3001BDisplay display(SPI1);
 #elif defined(WDG_BOARD_HELTEC_V3) || defined(WDG_BOARD_HELTEC_V4)
 SSD1306Display display;
 #endif
@@ -201,7 +203,7 @@ class SidecarMeshClient final : public BaseChatMesh {
   bool shouldOverwriteWhenFull() const override { return true; }
 };
 
-#if defined(WDG_BOARD_RAK4631)
+#if defined(NRF52_PLATFORM)
 SX1262 lora = new Module(wdg_board::kLoRaNss, wdg_board::kLoRaDio1,
                          wdg_board::kLoRaReset, wdg_board::kLoRaBusy, SPI);
 #else
@@ -294,7 +296,7 @@ void renderDisplay() {
   }
   displayDirty = false;
 
-#if defined(WDG_BOARD_RCC6)
+#if defined(WDG_BOARD_RCC6) || defined(WDG_BOARD_RC52)
   constexpr ColorVal kBlack = 0x0000;
   constexpr ColorVal kWhite = 0xFFFF;
   constexpr ColorVal kBlue = 0x001F;
@@ -405,6 +407,10 @@ bool validRadioSettings(float frequency, float bandwidth,
 void configureFromHost(float frequency, float bandwidth,
                        unsigned spreadingFactor, unsigned codingRate,
                        uint32_t epoch, const char *slug) {
+  if (!loraReady) {
+    Serial.println("WDG1 ERROR RADIO_NOT_READY");
+    return;
+  }
   if (!validRadioSettings(frequency, bandwidth, spreadingFactor, codingRate)) {
     Serial.println("WDG1 ERROR SETTINGS");
     return;
@@ -573,7 +579,7 @@ void reportVerifiedAdvert(const ContactInfo &contact, uint8_t pathLength,
 }
 
 bool setupLora() {
-#if defined(WDG_BOARD_RAK4631)
+#if defined(NRF52_PLATFORM)
   SPI.setPins(wdg_board::kLoRaMiso, wdg_board::kLoRaSclk,
               wdg_board::kLoRaMosi);
   SPI.begin();
@@ -626,7 +632,7 @@ void setup() {
   Serial.println("Mode: passive MeshCore RX; USB serial only; no Wi-Fi/BLE");
 
   wdg_board::begin();
-#if defined(WDG_BOARD_RCC6) || defined(WDG_BOARD_HELTEC_V3) || \
+#if defined(WDG_BOARD_RCC6) || defined(WDG_BOARD_RC52) || defined(WDG_BOARD_HELTEC_V3) || \
     defined(WDG_BOARD_HELTEC_V4)
   displayReady = display.begin();
 #else
