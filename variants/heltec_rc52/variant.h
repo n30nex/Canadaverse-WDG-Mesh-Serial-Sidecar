@@ -74,6 +74,7 @@ static const uint8_t SCK1  = PIN_SPI1_SCK;
 
 #define PIN_BAT_CTL             (4)
 #define PIN_VBAT_READ           (31)
+static const uint8_t A0 = PIN_VBAT_READ;
 #define BATTERY_PIN             PIN_VBAT_READ
 #define ADC_MULTIPLIER          (4.90F)
 #define ADC_RESOLUTION          (14)
